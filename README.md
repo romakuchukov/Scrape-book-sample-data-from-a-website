@@ -1,5 +1,21 @@
 Run the following commands:
 
+Clone the repo.
+
+```
+git clone git@github.com:romakuchukov/015abcf278375cc394.git
+```
+
+Move into the directory:
+
+```
+cd 015abcf278375cc394
+```
+
+`015abcf278375cc394` is just a job number i got from upwork.
+
+---
+
 Install dependencies.
 
 ```
