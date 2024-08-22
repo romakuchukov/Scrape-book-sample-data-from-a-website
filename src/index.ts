@@ -4,6 +4,8 @@ import playwright from "playwright";
 const TIMEOUT = 200;
 const FILE = "data.txt";
 const SELECTOR = ".title-page__description p";
+const URL =
+  "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/";
 
 (async () => {
   // store text in a variable
@@ -14,9 +16,7 @@ const SELECTOR = ".title-page__description p";
     const browser = await playwright[browserType].launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
-    await page.goto(
-      "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/"
-    );
+    await page.goto(URL);
 
     elementText = await page.$eval(
       SELECTOR,
