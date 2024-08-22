@@ -3,16 +3,14 @@ Run the following commands:
 Clone the repo.
 
 ```
-git clone git@github.com:romakuchukov/015abcf278375cc394.git
+git clone git@github.com:romakuchukov/scrape-book-sample-data-from-a-website
 ```
 
 Move into the directory:
 
 ```
-cd 015abcf278375cc394
+cd scrape-book-sample-data-from-a-website
 ```
-
-`015abcf278375cc394` is just a job number i got from upwork.
 
 ---
 
