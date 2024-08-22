@@ -2,6 +2,8 @@ import fs from "fs";
 import playwright from "playwright";
 
 const TIMEOUT = 200;
+const FILE = "data.txt";
+const SELECTOR = ".title-page__description p";
 
 (async () => {
   // store text in a variable
@@ -17,7 +19,7 @@ const TIMEOUT = 200;
     );
 
     elementText = await page.$eval(
-      ".title-page__description p",
+      SELECTOR,
       (el: HTMLParagraphElement) => el.textContent
     );
     // increase the timeout if there is an issue with server blocking you
@@ -25,7 +27,7 @@ const TIMEOUT = 200;
     await browser.close();
   }
   // write data to a file
-  fs.writeFile("data.txt", elementText, (err) => {
+  fs.writeFile(FILE, elementText, (err) => {
     if (err) return console.log(err);
     console.log("The file was saved!");
   });
