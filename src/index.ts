@@ -1,33 +1,60 @@
 import fs from "fs";
-import playwright from "playwright";
+import { chromium, Locator, Page } from "playwright";
 
 const TIMEOUT = 200;
-const FILE = "data.txt";
-const SELECTOR = ".title-page__description p";
+const FILE = "data.json";
+const TITLE_SELECTOR = "div.title-page__info";
+const BODY_SELECTOR = "div.title-page__description p";
 const URL =
   "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/";
 
-(async () => {
-  // store text in a variable
-  let elementText = "";
-  // since i don't know which browser will be available, so let's loop through some of them, though it's not necessary
-  // it needs only one browser to get the text from the page ["chromium", "firefox", "webkit"] -> ["chromium"] or the loop can be refactored away
-  for (const browserType of ["chromium", "firefox", "webkit"]) {
-    const browser = await playwright[browserType].launch({ headless: true });
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(URL);
-
-    elementText = await page.$eval(
-      SELECTOR,
-      (el: HTMLParagraphElement) => el.textContent
+// helper function to get text from the page
+async function getText(
+  page: Page,
+  selector: string,
+  options: { has: Locator }
+) {
+  return await page
+    .locator(selector, options)
+    .evaluate((elements) =>
+      [...elements.childNodes]
+        .filter((element) => element.nodeType === Node.TEXT_NODE)
+        .map((element) => element.textContent)
     );
-    // increase the timeout if there is an issue with server blocking you
-    await page.waitForTimeout(TIMEOUT);
-    await browser.close();
-  }
+}
+
+(async () => {
+  console.log("Starting the scraping process...");
+
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(URL);
+
+  const titleData = await page
+    .locator(TITLE_SELECTOR)
+    .allInnerTexts()
+    .then((text) => text.join("\n").split("\n"));
+
+  const metaData = await page.locator(BODY_SELECTOR).allTextContents();
+  metaData.shift();
+
+  // storing data in an object
+  const text = {
+    meta: [titleData.shift(), ...metaData],
+    text: [
+      ...(await getText(page, `${BODY_SELECTOR} b`, {
+        has: page.locator("i"),
+      })),
+      ...(await getText(page, BODY_SELECTOR, { has: page.locator("b") })),
+    ],
+  };
+
+  // increase the timeout if there is an issue with server blocking you
+  await page.waitForTimeout(TIMEOUT);
+  await browser.close();
   // write data to a file
-  fs.writeFile(FILE, elementText, (err) => {
+  fs.writeFile(FILE, JSON.stringify(text), (err) => {
     if (err) return console.log(err);
     console.log("The file was saved!");
   });
