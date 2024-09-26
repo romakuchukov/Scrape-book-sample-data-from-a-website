@@ -1,7 +1,8 @@
 {
   "name": "015abcf278375cc394",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "type": "module",
+  "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
