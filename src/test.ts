@@ -1,4 +1,4 @@
-// import fs from "fs";
+import fs from "fs";
 import { chromium } from "playwright";
 const URL =
   "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/";
@@ -50,15 +50,26 @@ await page
     console.log(element);
   });
 
-await page
+// const writeToFile = (text) => {
+//   fs.writeFile("test.html", text, (err) => {
+//     if (err) return console.log(err);
+//     console.log(text);
+//     console.log("The file was saved!");
+//   });
+// };
+
+const text = await page
   .frameLocator("iFrame")
   .locator("body")
   .evaluate((element: HTMLElement) => {
-    setTimeout(() => {
-      console.log(element.textContent);
-    }, 5000);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(element.textContent);
+        console.log(element.textContent);
+      }, 5000);
+    });
   });
-
+console.log(2, text);
 // const orderSent = page.locator(".chapter-bar-next-button");
 // await orderSent.waitFor();
 
@@ -95,9 +106,11 @@ await page
 // // increase the timeout if there is an issue with server blocking you
 // await page.waitForTimeout(TIMEOUT);
 
-// await browser.close();
 // write data to a file
 // fs.writeFile(FILE, JSON.stringify(text), (err) => {
 //   if (err) return console.log(err);
 //   console.log("The file was saved!");
 // });
+fs.writeFileSync("test.txt", text as string);
+
+await browser.close();
