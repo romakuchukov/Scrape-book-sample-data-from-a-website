@@ -1,13 +1,15 @@
 import fs from "fs";
-import { chromium } from "playwright";
-const URL =
-  "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/";
+import { chromium, Frame } from "playwright";
+const url = new URL(
+  "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/"
+);
 
 console.log("Starting the scraping process...");
 const browser = await chromium.launch({ headless: false, devtools: true });
 const context = await browser.newContext();
 const page = await context.newPage();
-await page.goto(URL);
+
+await page.goto(url.origin);
 
 const redirecturlData = await page
   .locator("#sample-holder")
@@ -27,13 +29,23 @@ response = await page.goto(src);
 // await page.getByText("trigger response").click();
 // const responseD = await responsePromise;
 //https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/about_book.html?cmpt=eyJzcGluZSI6MX0%3D--68da03495264466b4d2caa0b00ecc0e190da233f
-const responsePromise = page.waitForResponse(
-  "https://odcom-69a2f5f05adbd3cd6ee6b80e9fbf1a2f.read.overdrive.com/about_book.html*"
-);
-// await page.getByText("trigger response").click();
-const responseD = await responsePromise;
-console.log(responseD.status());
+const responsePromise = page.waitForResponse(`${url.origin}/about_book.html*`);
+
+response = await responsePromise;
+console.log(response.status());
 // wait for page to load
+
+async function dumpFrameTree(frame: Frame, indent: string) {
+  const content = [];
+  console.log(indent + frame.url());
+  for (const child of frame.childFrames()) {
+    content.push(await child.content());
+    dumpFrameTree(child, indent + "  ");
+  }
+  return new Promise((resolve) => {
+    resolve(content);
+  });
+}
 
 await page.evaluate(async () => {
   // if this doesn't work, you can try to increase 0 to a higher number (i.e. 100)
@@ -62,14 +74,16 @@ const text = await page
   .frameLocator("iFrame")
   .locator("body")
   .evaluate((element: HTMLElement) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(element.textContent);
-        console.log(element.textContent);
-      }, 5000);
+    return new Promise((resolve) => {
+      resolve(element.textContent);
+      // setTimeout(() => {
+      //   console.log(element.textContent);
+      // }, 5000);
     });
   });
 console.log(2, text);
+const content = await dumpFrameTree(page.mainFrame(), "");
+console.log(3, content);
 // const orderSent = page.locator(".chapter-bar-next-button");
 // await orderSent.waitFor();
 
@@ -111,6 +125,6 @@ console.log(2, text);
 //   if (err) return console.log(err);
 //   console.log("The file was saved!");
 // });
-fs.writeFileSync("test.txt", text as string);
+fs.writeFileSync("test.txt", JSON.stringify(content));
 
 await browser.close();
