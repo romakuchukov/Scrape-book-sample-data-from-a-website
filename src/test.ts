@@ -7,26 +7,21 @@ const url = new URL(
 const FILE = `${url.hostname}.json`;
 
 console.log("Starting the scraping process...");
-const browser = await chromium.launch({ headless: false, devtools: true });
+
+const browser = await chromium.launch();
 const context = await browser.newContext();
 const page = await context.newPage();
 
 await page.goto(url.origin);
 
-const redirecturlData = await page
+const redirecturl = await page
   .locator("#sample-holder")
   .getAttribute("data-redirecturl");
 
-let response = await page.goto(redirecturlData);
+let response = await page.goto(redirecturl);
 const { src } = await response.json();
 
-response = await page.goto(src);
-
-// const responsePromise = await page.waitForResponse(
-//   `${url.origin}/about_book.html*`
-// );
-// console.log(responsePromise.status());
-// // wait for page to load
+await page.goto(src);
 
 const frameContent = await page
   .locator(".chapter-bar-next-button", { has: page.locator("span") })
