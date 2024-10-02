@@ -38,18 +38,18 @@ const chapterButton = (await page.evaluateHandle(() =>
 )) as unknown as HTMLButtonElement;
 
 // get the content
-const content = await page.evaluate(
+let content: string[] = await page.evaluate(
   ({ chapterButton, timeout }) => {
-    return new Promise((resolve) => {
+    return new Promise<string[]>((resolve) => {
       let counter = 1;
-      const data = [];
+      const data: string[] = [];
       const len = document.querySelectorAll("#spool .sheet").length;
       const intervalId = setInterval(() => {
         chapterButton.click();
         // get the data
         data.push(
           document.querySelector("iframe").contentWindow.document.body
-            .textContent
+            .textContent || ""
         );
         // exit when done
         if (counter > len) {
@@ -63,6 +63,8 @@ const content = await page.evaluate(
   { chapterButton, timeout: TIMEOUT }
 );
 
+// remove duplicates
+content = [...new Set(content)];
 console.log("Writing to file then exiting...");
 // write the content to a file
 fs.writeFile(FILE, JSON.stringify(content), async (err) => {
