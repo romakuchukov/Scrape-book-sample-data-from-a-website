@@ -31,16 +31,21 @@ await page.goto(src);
 const iframe = page.locator("#LENS_CMPT_0 iframe");
 await iframe.waitFor({ state: "visible" });
 
+// creating a button instance just so that we can pass it to the evaluate function along with the timeout, simply to avoid hardcoding the timeout
+// a bit unfortunate (and not strictly necessary) that we have to do this, but it's the only way to pass the timeout as a variable
+const chapterButton = (await page.evaluateHandle(() =>
+  document.querySelector(".chapter-bar-next-button")
+)) as unknown as HTMLButtonElement;
+
 // get the content
-const content = await page
-  .locator(".chapter-bar-next-button", { has: page.locator("span") })
-  .evaluate((element: HTMLElement) => {
+const content = await page.evaluate(
+  ({ chapterButton, timeout }) => {
     return new Promise((resolve) => {
       let counter = 1;
       const data = [];
       const len = document.querySelectorAll("#spool .sheet").length;
-      const intervalId = setInterval(async () => {
-        element.click();
+      const intervalId = setInterval(() => {
+        chapterButton.click();
         // get the data
         data.push(
           document.querySelector("iframe").contentWindow.document.body
@@ -52,9 +57,11 @@ const content = await page
           resolve(data);
         }
         counter++;
-      }, TIMEOUT);
+      }, timeout);
     });
-  });
+  },
+  { chapterButton, timeout: TIMEOUT }
+);
 
 console.log("Writing to file then exiting...");
 // write the content to a file
