@@ -16,16 +16,17 @@ await page.goto(url.origin);
 const redirecturlData = await page
   .locator("#sample-holder")
   .getAttribute("data-redirecturl");
+
 let response = await page.goto(redirecturlData);
 const { src } = await response.json();
 
 response = await page.goto(src);
 
-const responsePromise = page.waitForResponse(`${url.origin}/about_book.html*`);
-
-response = await responsePromise;
-console.log(response.status());
-// wait for page to load
+// const responsePromise = await page.waitForResponse(
+//   `${url.origin}/about_book.html*`
+// );
+// console.log(responsePromise.status());
+// // wait for page to load
 
 const frameContent = await page
   .locator(".chapter-bar-next-button", { has: page.locator("span") })
@@ -33,23 +34,24 @@ const frameContent = await page
     return new Promise((resolve) => {
       let counter = 0;
       const content = [];
+      const len = document.querySelectorAll("#spool .sheet").length;
       const intervalId = setInterval(async () => {
         element.click();
         content.push(
           document.querySelector("iframe").contentWindow.document.body
             .textContent
         );
-        counter++;
-        if (counter === 10) {
+
+        if (counter > len) {
           clearInterval(intervalId);
           resolve(content);
         }
+        counter++;
       }, 1000);
     });
   });
 
-console.log(123, frameContent);
-
+console.log("Writing to file then exiting...");
 fs.writeFileSync(FILE, JSON.stringify(frameContent));
 
 await browser.close();
