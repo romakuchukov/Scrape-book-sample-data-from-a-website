@@ -10,7 +10,7 @@ const FILE = `${url.hostname}.json`;
 
 console.log("Starting the scraping process...");
 // launch the browser
-const browser = await chromium.launch();
+const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext();
 const page = await context.newPage();
 // go to the main page
