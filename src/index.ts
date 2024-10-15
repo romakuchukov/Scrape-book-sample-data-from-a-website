@@ -31,43 +31,43 @@ await page.goto(src);
 const iframe = page.locator("#LENS_CMPT_0 iframe");
 await iframe.waitFor({ state: "visible" });
 
-// creating a button instance just so that we can pass it to the evaluate function along with the timeout, simply to avoid hardcoding the timeout
-// a bit unfortunate (and not strictly necessary) that we have to do this, but it's the only way to pass the timeout as a variable
-const chapterButton = (await page.evaluateHandle(() =>
-  document.querySelector(".chapter-bar-next-button")
-)) as unknown as HTMLButtonElement;
+const intervalId = setInterval(async () => {
+  await page.keyboard.press("ArrowRight");
+}, TIMEOUT);
 
 // get the content
-let content: string[] = await page.evaluate(
-  ({ chapterButton, timeout }) => {
-    return new Promise<string[]>((resolve) => {
-      let counter = 1;
-      const data: string[] = [];
-      const len = document.querySelectorAll("#spool .sheet").length;
-      const intervalId = setInterval(() => {
-        chapterButton.click();
-        // get the data
-        data.push(
-          document.querySelector("iframe").contentWindow.document.body
-            .textContent || ""
-        );
-        // exit when done
-        if (counter > len) {
-          clearInterval(intervalId);
+let content: string[] = await page.evaluate(() => {
+  return new Promise<string[]>((resolve) => {
+    const data: string[] = [];
+    document.addEventListener(
+      "keydown",
+      () => {
+        document.querySelectorAll("iframe").forEach((iframe) => {
+          const cleanTextContent =
+            iframe.contentWindow.document.body?.textContent
+              .replaceAll("\r", " ")
+              .replaceAll("\n", " ")
+              .replaceAll("\t", " ")
+              .replaceAll(/\s+/g, " ")
+              .replaceAll(/^\s+|\s+$/g, "");
+          data.push(cleanTextContent || "");
+        });
+        // exit when the last page is reached
+        if (document.querySelector(".shibui-shade-blind")) {
           resolve(data);
         }
-        counter++;
-      }, timeout);
-    });
-  },
-  { chapterButton, timeout: TIMEOUT }
-);
+      },
+      true
+    );
+  });
+});
 
 // remove duplicates
 content = [...new Set(content)];
 console.log("Writing to file then exiting...");
 // write the content to a file
 fs.writeFile(FILE, JSON.stringify(content), async (err) => {
+  clearInterval(intervalId);
   await browser.close();
   if (err) return console.error(err);
 });
